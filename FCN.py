@@ -11,7 +11,7 @@ from six.moves import xrange
 import readAerialDataset
 
 FLAGS = tf.flags.FLAGS
-tf.flags.DEFINE_integer("batch_size", "2", "batch size for training")
+tf.flags.DEFINE_integer("batch_size", "20", "batch size for training")
 tf.flags.DEFINE_string("logs_dir", "logs/", "path to logs directory")
 tf.flags.DEFINE_string("data_dir", "/Users/liuchen/Documents/Code/Projects/Hackathon_Satellite_Imagery/data", "path to dataset")
 tf.flags.DEFINE_float("learning_rate", "1e-4", "Learning rate for Adam Optimizer")
@@ -21,7 +21,7 @@ tf.flags.DEFINE_string('mode', "train", "Mode train/ test/ visualize")
 
 MODEL_URL = 'http://www.vlfeat.org/matconvnet/models/beta16/imagenet-vgg-verydeep-19.mat'
 
-MAX_ITERATION = int(1e5 + 1)
+MAX_ITERATION = int(1e4 + 1)
 NUM_OF_CLASSESS = 2 #TODO change to 2
 IMAGE_SIZE = 224 #TODO change. Is the number of pixels right?
 
@@ -202,10 +202,13 @@ def main(argv=None):
                 summary_writer.add_summary(summary_str, itr)
 
             if itr % 500 == 0:
-                valid_images, valid_annotations = validation_dataset_reader.next_batch(FLAGS.batch_size)
-                valid_loss = sess.run(loss, feed_dict={image: valid_images, annotation: valid_annotations,
+                valid_loss_list=[]
+                for idx in xrange(25):
+                    valid_images, valid_annotations = validation_dataset_reader.next_batch(FLAGS.batch_size)
+                    valid_loss = sess.run(loss, feed_dict={image: valid_images, annotation: valid_annotations,
                                                        keep_probability: 1.0})
-                print("%s ---> Validation_loss: %g" % (datetime.datetime.now(), valid_loss))
+                    valid_loss_list.append(valid_loss)
+                print("%s ---> Validation_loss: %g" % (datetime.datetime.now(), np.mean(valid_loss_list)))
                 saver.save(sess, FLAGS.logs_dir + "model.ckpt", itr)
 
     elif FLAGS.mode == "visualize":
