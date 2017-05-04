@@ -28,19 +28,19 @@ def read_dataset(data_dir):
         no_of_images = len(image_list[directory])
         print ('No. of %s files: %d' % (directory, no_of_images))
 
-        return image_list['training'], image_list['validation']
+    return image_list['training'], image_list['validation']
 
 
 
+if __name__=='__main__':
+    import BatchDatsetReader as dataset
 
-import BatchDatsetReader as dataset
 
+    # testing area ....
+    train_records, valid_records = read_dataset("/Users/liuchen/Documents/Code/Projects/Hackathon_Satellite_Imagery/data")
 
-# testing area ....
-train_records, valid_records = read_dataset("/Users/taafoso2/Documents/swisscom/hackathon/FCN.tensorflow/data")
+    image_options = {'resize': True, 'resize_size': 1500}
+    train_dataset_reader = dataset.BatchDatset(train_records, image_options)
+    train_images, train_annotations = train_dataset_reader.next_batch(20)
 
-image_options = {'resize': True, 'resize_size': 1500}
-train_dataset_reader = dataset.BatchDatset(train_records, image_options)
-train_images, train_annotations = train_dataset_reader.next_batch(1)
-
-print('end')
+    print('end')
