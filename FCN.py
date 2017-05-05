@@ -17,7 +17,7 @@ tf.flags.DEFINE_string("data_dir", "data/", "path to dataset")
 tf.flags.DEFINE_float("learning_rate", "1e-3", "Learning rate for Adam Optimizer")
 tf.flags.DEFINE_string("model_dir", "Model_zoo/", "Path to vgg model mat")
 tf.flags.DEFINE_bool('debug', "False", "Debug mode: True/ False")
-tf.flags.DEFINE_string('mode', "train", "Mode train/ test/ visualize")
+tf.flags.DEFINE_string('mode', "visualize", "Mode train/ test/ visualize")
 
 MODEL_URL = 'http://www.vlfeat.org/matconvnet/models/beta16/imagenet-vgg-verydeep-19.mat'
 
@@ -188,6 +188,7 @@ def main(argv=None):
     if ckpt and ckpt.model_checkpoint_path:
         saver.restore(sess, ckpt.model_checkpoint_path)
         print("Model restored...")
+    saver.restore(sess, 'logs/model.ckpt-13500')
 
     if FLAGS.mode == "train":
         for itr in xrange(MAX_ITERATION):
@@ -212,18 +213,20 @@ def main(argv=None):
                 saver.save(sess, FLAGS.logs_dir + "model.ckpt", itr)
 
     elif FLAGS.mode == "visualize":
-        valid_images, valid_annotations = validation_dataset_reader.get_random_batch(FLAGS.batch_size)
-        pred = sess.run(pred_annotation, feed_dict={image: valid_images, annotation: valid_annotations,
-                                                    keep_probability: 1.0})
-        valid_annotations = np.squeeze(valid_annotations, axis=3)
-        pred = np.squeeze(pred, axis=3)
+        for idx in xrange(25):
+            valid_images, valid_annotations = validation_dataset_reader.get_random_batch(FLAGS.batch_size)
+            pred = sess.run(pred_annotation, feed_dict={image: valid_images, annotation: valid_annotations,
+                                                        keep_probability: 1.0})
+            valid_annotations *= 255
+            pred *= 255
+            valid_annotations = np.squeeze(valid_annotations, axis=3)
+            pred = np.squeeze(pred, axis=3)
 
-        for itr in range(FLAGS.batch_size):
-            utils.save_image(valid_images[itr].astype(np.uint8), FLAGS.logs_dir, name="inp_" + str(5+itr))
-            utils.save_image(valid_annotations[itr].astype(np.uint8), FLAGS.logs_dir, name="gt_" + str(5+itr))
-            utils.save_image(pred[itr].astype(np.uint8), FLAGS.logs_dir, name="pred_" + str(5+itr))
-            print("Saved image: %d" % itr)
-
+            for itr in range(FLAGS.batch_size):
+                utils.save_image(valid_images[itr].astype(np.uint8), FLAGS.logs_dir, name="inp_" + str(FLAGS.batch_size*idx+itr))
+                utils.save_image(valid_annotations[itr].astype(np.uint8), FLAGS.logs_dir, name="gt_" + str(FLAGS.batch_size*idx+itr))
+                utils.save_image(pred[itr].astype(np.uint8), FLAGS.logs_dir, name="pred_" + str(FLAGS.batch_size*idx+itr))
+                print("Saved image: %d" % (FLAGS.batch_size*idx+itr))
 
 if __name__ == "__main__":
     tf.app.run()
